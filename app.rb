@@ -1,126 +1,150 @@
 require './person'
-require './book'
 require './rental'
+require 'date'
+require './classroom'
 require './teacher'
 require './student'
-require 'date'
+require './book'
 
 class App
-  attr_accessor :people, :books, :rentals
-
   def initialize
+    @rentals = []
     @people = []
     @books = []
-    @rentals = []
+    @teachers = []
+    @students = []
   end
 
-  def list_all_books
-    if @books.empty?
-      puts '**************Book store is Empty*****************'
-    else
-      @books.each_with_index { |book, index| puts "#{index} title: #{book.title} author: #{book.author}" }
-    end
-  end
-
-  def list_all_people
-    if @people.empty?
-      puts '************No person registered yet************'
-    else
-      @people.each_with_index do |person, index|
-        puts "#{index}) ID: #{person.id} name: #{person.name} age: #{person.age}"
+  def list_books
+    if @books.length.positive?
+      @books.each_with_index do |book, i|
+        p " book number: #{i}, ID: #{book.id}, Title: #{book.title}, Author: #{book.author}"
       end
+    else
+      p 'books not found'
     end
   end
 
-  def add_person
-    print 'Do you whant to create a Student (1) 0r Teacher (2)? [input the number]: '
-    job = gets.chomp.to_i
-    case job
+  def list_people
+    if @people.length.positive?
+      @people.each_with_index do |person, i|
+        p "person number: #{i}, ID: #{person.id}, Name: #{person.name}, Age: #{person.age}"
+      end
+    else
+      p 'persons not found'
+    end
+  end
+
+  def rent_list_by_id
+    if @rentals.length.positive?
+      p('select Person ID in the List below')
+      list_people
+      p 'Type person ID:'
+      id = gets.chomp
+
+      @rentals.select do |rent|
+        if rent.person.id == id.to_i
+          p "Date: #{rent.date}, Book '#{rent.book.title}', Author #{rent.book.author}"
+        else
+          p 'Rental not found for the selected person '
+        end
+      end
+    else
+      p 'Rental not found'
+    end
+  end
+
+  def create_person
+    p 'For student type (1), for teacher tyep (2)'
+    input = gets.chomp
+    case input.to_i
     when 1
-      print 'name: '
-      name = gets.chomp
-      print 'Age: '
-      age = gets.chomp
-      print 'Has parent permissiom [Y/N]? '
-      permission = gets.chomp.downcase
-      case permission
-      when 'y'
-        parent_permission = true
-      when 'n'
-        parent_permission = false
-      else
-        puts '********************Invalid input*****************'
-        main
-      end
-      student = Student.new(age, name, parent_permission: parent_permission)
-      @people.push(student)
-      puts
-      '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-       Student created successfully!
-      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
+      create_student_option
     when 2
-      print 'name: '
-      name = gets.chomp
-      print 'Age: '
-      age = gets.chomp
-      print 'Specialization: '
-      specialization = gets.chomp
-      teacher = Teacher.new(age, name, specialization)
-      @people.push(teacher)
-      puts
-      '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      Teacher created successfully!
-      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
+      create_teacher_option
+    else
+      p 'invalid input!!! For student type (1), for teacher tyep (2)'
     end
   end
 
-  def create_book
-    print 'Title: '
+  def create_student(classroom, age, name, parent_permission)
+    student = Student.new(classroom, age, name, parent_permission: parent_permission)
+    @people.push(student)
+  end
+
+  def create_teacher(specialization, age, name)
+    teacher = Teacher.new(specialization, age, name)
+    @people.push(teacher)
+  end
+
+  def create_student_option
+    p ' type student Name : '
+    name = gets.chomp
+    p ' type student Age : '
+    age = gets.chomp
+    p ' type student Classroom <number> : '
+    classroom = gets.chomp
+    parent_permission = true
+    permission?(parent_permission)
+    create_student(classroom.to_i, age.to_i, name, parent_permission)
+    p " student #{name} has been added successfully!!!"
+  end
+
+  def create_teacher_option
+    p 'type teacher name:'
+    name = gets.chomp
+    p 'type teacher age:'
+    age = gets.chomp
+    p 'type teacher specialization:'
+    specialization = gets.chomp
+    create_teacher(specialization, age.to_i, name)
+    p "Teacher #{name} has been added successfully!!!"
+  end
+
+  def create_new_book
+    p ' type Book Title : '
     title = gets.chomp
-    print 'Author: '
+    p ' type Book Author : '
     author = gets.chomp
+
     book = Book.new(title, author)
     @books.push(book)
-    puts '
-      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      Book created successfully!
-      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
+    p "Book #{title} has been added successfully!!!"
   end
 
-  def add_rental
-    puts 'Select Book from the following list by number'
-    list_all_books
-    book_index = gets.chomp.to_i
-    puts 'Select Person from the following list by number'
-    list_all_people
-    person_index = gets.chomp.to_i
-    puts "Date: #{Date.today}"
-    date = gets.chomp
-    rental = Rental.new(date, books[book_index], people[person_index])
-    @rentals.push(rental)
-    puts '
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Rental created successfully!
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
+  def create_rental
+    p ' Select a Book number in the list below'
+    list_books
+    p ' type book number : '
+    book_number = gets.chomp
+    p 'Select a Person number in the list below'
+    list_people
+    person_number = gets.chomp
+    p ' type the Date in this format, for example: (2000/01/01) : '
+    date = conver_date(gets)
+
+    book = @books[book_number.to_i]
+    people = @people[person_number.to_i]
+
+    rent = Rental.new(date, book, people)
+    @rentals.push(rent)
+    p 'Rental has been added successfully!!!'
   end
 
-  def list_rentals
-    list_all_people
-    print 'ID of person: '
-    id = gets.chomp.to_i
-    person = @people.select { |x| x.id == id }[0]
-    if person
-      person.rentals.each { |rental| puts "Date: #{rental.date} book, #{rental.book.title} by #{rental.book.author}" }
+  def permission?(parent_permission)
+    p 'Has parent permission? type Y to yes and N to no: '
+    permission = gets.chomp
+    case permission
+    when 'n', 'N'
+      !parent_permission
+    when 'y', 'Y'
+      parent_permission
     else
-      puts '
-      ***************Wrong input please try again!!*************'
+      permission?(parent_permission)
     end
   end
 
-  def exit_method
-    abort '
-      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      Thank you for using the OOP School Library App!
-      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
+  def conver_date(date)
+    Date.parse(date)
   end
 end
