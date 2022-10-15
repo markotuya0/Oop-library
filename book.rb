@@ -1,17 +1,12 @@
 class Book
-  attr_reader :rentals
-  attr_accessor :title, :author
-
-  has_many :rentals
-  has_many :persons, through: rentals
-
-  def initialize(title, author, rentals)
+  def initialize(title, author)
     @title = title
     @author = author
-    @rentals = []
   end
 
-  def add_rental(person, date)
-    Rental.new(date, self, person)
+  def add_rental(date, person)
+    @rentals = Rental.new(date, self, person)
   end
+
+  attr_accessor :title, :author, :rentals
 end
