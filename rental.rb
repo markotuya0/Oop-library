@@ -1,7 +1,4 @@
 class Rental
-  belongs_to :student
-  belongs_to :book
-
   attr_accessor :date, :book, :person
 
   def initialize(date, book, person)
