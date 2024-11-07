@@ -8,9 +8,7 @@
 - RUBY
 - Linters
 
-## Live Demo (if available)
 
-[Live Demo Link](https://livedemo.com)
 ## To get a local copy up and running:
 
 1. Clone this repository or download the zip folder:
